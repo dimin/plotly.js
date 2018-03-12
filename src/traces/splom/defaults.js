@@ -22,8 +22,8 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
         return Lib.coerce(traceIn, traceOut, attributes, attr, dflt);
     }
 
-    var dimLen = handleDimensionsDefaults(traceIn, traceOut);
-    if(!dimLen) {
+    var dimLength = handleDimensionsDefaults(traceIn, traceOut);
+    if(!dimLength) {
         traceOut.visible = false;
         return;
     }
@@ -79,7 +79,7 @@ function handleDimensionsDefaults(traceIn, traceOut) {
         if(!visible) continue;
 
         var values = coerce('values');
-        if(!values.length) {
+        if(!values || values.length) {
             dimOut.visible = false;
             continue;
         }
@@ -101,12 +101,12 @@ function handleDimensionsDefaults(traceIn, traceOut) {
 }
 
 function handleAxisDefaults(traceIn, traceOut, layout, coerce) {
-    var dimLen = traceOut.dimensions.length;
-    var xaxesDflt = new Array(dimLen);
-    var yaxesDflt = new Array(dimLen);
+    var dimLength = traceOut.dimensions.length;
+    var xaxesDflt = new Array(dimLength);
+    var yaxesDflt = new Array(dimLength);
     var i;
 
-    for(i = 0; i < dimLen; i++) {
+    for(i = 0; i < dimLength; i++) {
         xaxesDflt[i] = 'x' + (i ? i + 1 : '');
         yaxesDflt[i] = 'y' + (i ? i + 1 : '');
     }
@@ -114,7 +114,7 @@ function handleAxisDefaults(traceIn, traceOut, layout, coerce) {
     var xaxes = coerce('xaxes', xaxesDflt);
     var yaxes = coerce('yaxes', yaxesDflt);
 
-    // TODO what to do when xaxes.length or yaxes.length !== dimLen ???
+    // TODO what to do when xaxes.length or yaxes.length !== dimLength ???
 
     for(i = 0; i < xaxes.length; i++) {
         Lib.pushUnique(layout._splomXaxes, xaxes[i]);

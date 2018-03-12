@@ -1373,7 +1373,6 @@ plots.supplyLayoutModuleDefaults = function(layoutIn, layoutOut, fullData, trans
     var basePlotModules = layoutOut._basePlotModules;
     var component, i, _module;
 
-
     var Cartesian = Registry.subplotsRegistry.cartesian;
 
     // check if any components need to add more base plot modules

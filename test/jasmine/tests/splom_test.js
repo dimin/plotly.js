@@ -35,6 +35,10 @@ describe('Test splom trace defaults:', function() {
         expect(gd._fullData[0].dimensions[1].visible).toBe(false);
     });
 
+    it('should work with only one dimensions', function() {
+        // TODO this breaks at the moment
+    });
+
     it('should set `grid.xaxes` and `grid.yaxes` default using the new of dimensions', function() {
         _supply({
             dimensions: [
@@ -44,6 +48,9 @@ describe('Test splom trace defaults:', function() {
         });
 
         var fullTrace = gd._fullData[0];
+        expect(fullTrace._commonLength).toBe(3, 'common length');
+        expect(fullTrace.dimensions[0]._length).toBe(3, 'dim 0 length');
+        expect(fullTrace.dimensions[1]._length).toBe(3, 'dim 1 length');
         expect(fullTrace.xaxes).toEqual(['x', 'x2']);
         expect(fullTrace.yaxes).toEqual(['y', 'y2']);
 
@@ -96,5 +103,18 @@ describe('Test splom trace defaults:', function() {
 
     it('should set axis title default using dimensions *label*', function() {
         // TODO
+    });
+
+    it('should lead to correct axis auto type value', function() {
+        _supply({
+            dimensions: [
+                {values: ['a', 'b', 'c']},
+                {values: ['A', 't', 'd']}
+            ]
+        });
+
+        var fullLayout = gd._fullLayout;
+        expect(fullLayout.xaxis.type).toBe('category');
+        expect(fullLayout.yaxis.type).toBe('category');
     });
 });

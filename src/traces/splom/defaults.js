@@ -61,7 +61,7 @@ function handleDimensionsDefaults(traceIn, traceOut) {
     if(!Array.isArray(dimensionsIn)) return 0;
 
     var dimLength = dimensionsIn.length;
-    var commonLength = Infinity;
+    var commonLength = 0;
     var dimensionsOut = traceOut.dimensions = new Array(dimLength);
     var dimIn;
     var dimOut;
@@ -86,7 +86,7 @@ function handleDimensionsDefaults(traceIn, traceOut) {
 
         coerce('label');
 
-        commonLength = Math.min(commonLength, values.length);
+        commonLength = Math.max(commonLength, values.length);
         dimOut._index = i;
     }
 

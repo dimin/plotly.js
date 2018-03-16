@@ -37,6 +37,7 @@ module.exports = {
             role: 'info',
             dflt: true,
             editType: 'calc',
+            description: ''
         },
         label: {
             valType: 'string',
@@ -73,16 +74,18 @@ module.exports = {
 
     xdirection: {
         valType: 'enumerated',
-        role: 'info',
         values: ['right', 'left'],
         dflt: 'right',
+        role: 'info',
+        editType: 'plot',
         description: ''
     },
     ydirection: {
         valType: 'enumerated',
-        role: 'info',
         values: ['top', 'bottom'],
         dflt: 'bottom',
+        role: 'info',
+        editType: 'plot',
         description: ''
     },
 
@@ -92,21 +95,21 @@ module.exports = {
     showdiagonal: {
         valType: 'boolean',
         role: 'info',
-        dlft: true,
+        dflt: true,
         editType: 'plot',
         description: ''
     },
     showupperhalf: {
         valType: 'boolean',
         role: 'info',
-        dlft: true,
+        dflt: true,
         editType: 'plot',
         description: ''
     },
     showlowerhalf: {
         valType: 'boolean',
         role: 'info',
-        dlft: true,
+        dflt: true,
         editType: 'plot',
         description: ''
     },

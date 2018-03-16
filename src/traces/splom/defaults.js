@@ -79,7 +79,7 @@ function handleDimensionsDefaults(traceIn, traceOut) {
         if(!visible) continue;
 
         var values = coerce('values');
-        if(!values || values.length) {
+        if(!values || !values.length) {
             dimOut.visible = false;
             continue;
         }

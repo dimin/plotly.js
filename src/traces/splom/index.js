@@ -8,15 +8,65 @@
 
 'use strict';
 
-// TODO splom 'needs' the grid component, register it here?
+var createRegl = require('regl');
+var createMatrix = require('regl-scattermatrix');
+
+var ScatterGl = require('../scattergl');
+var AxisIDs = require('../../plots/cartesian/axis_ids');
 
 function calc(gd, trace) {
-    return [{x: false, y: false, t: {}, trace: trace}];
+    var stash = {};
+    var opts = {};
+    var i;
+
+    var dimLength = trace.dimensions.length;
+    opts.data = new Array(dimLength);
+    opts.ranges = new Array(dimLength);
+    opts.domains = new Array(dimLength);
+
+    for(i = 0; i < dimLength; i++) {
+        opts.data[i] = trace.dimensions[i].values;
+
+        var xa = AxisIDs.getFromId(gd, trace.xaxes[i]);
+        var ya = AxisIDs.getFromId(gd, trace.yaxes[i]);
+        opts.ranges[i] = [xa.range[0], ya.range[0], xa.range[1], ya.range[1]];
+        opts.domains[i] = [xa.domain[0], ya.domain[0], xa.domain[1], ya.domain[1]];
+    }
+
+    var scene = stash.scene = {};
+    scene.scatterOpts = opts;
+
+    return [{x: false, y: false, t: stash, trace: trace}];
 }
 
 function plot(gd, _, cdata) {
-    console.log('splom plot', cdata)
+    if(!cdata.length) return;
+
+    var fullLayout = gd._fullLayout;
+    var scene = cdata[0][0].t.scene;
+
+    // make sure proper regl instances are created
+    fullLayout._glcanvas.each(function(d) {
+        if(d.regl || d.pick) return;
+        d.regl = createRegl({
+            canvas: this,
+            attributes: {
+                antialias: !d.pick,
+                preserveDrawingBuffer: true
+            },
+            extensions: ['ANGLE_instanced_arrays', 'OES_element_index_uint'],
+            pixelRatio: gd._context.plotGlPixelRatio || global.devicePixelRatio
+        });
+    });
+
+    var regl = fullLayout._glcanvas.data()[0].regl;
+
+    scene.matrix = createMatrix(regl);
+    scene.matrix.update(scene.scatterOpts);
+    scene.matrix.draw();
 }
+
+// TODO splom 'needs' the grid component, register it here?
 
 module.exports = {
     moduleType: 'trace',

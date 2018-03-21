@@ -289,7 +289,7 @@ plots.supplyDefaults = function(gd) {
 
     var context = gd._context || {};
 
-    var i;
+    var i, j;
 
     // Create all the storage space for frames, but only if doesn't already exist
     if(!gd._transitionData) plots.createTransitionData(gd);
@@ -321,7 +321,6 @@ plots.supplyDefaults = function(gd) {
 
     // first fill in what we can of layout without looking at data
     // because fullData needs a few things from layout
-
     if(oldFullLayout._initialAutoSizeIsDone) {
 
         // coerce the updated layout while preserving width and height
@@ -364,11 +363,28 @@ plots.supplyDefaults = function(gd) {
     // clear the lists of trace and baseplot modules, and subplots
     newFullLayout._modules = [];
     newFullLayout._basePlotModules = [];
-    newFullLayout._subplots = emptySubplotLists();
+    var subplots = newFullLayout._subplots = emptySubplotLists();
+    var splomAxes = newFullLayout._splomAxes = {x: {}, y: {}};
 
     // then do the data
     newFullLayout._globalTransforms = (gd._context || {}).globalTransforms;
     plots.supplyDataDefaults(newData, newFullData, newLayout, newFullLayout);
+
+    // redo grid size defaults with info about splom x/y axes,
+    // and fill in generated cartesian axes and subplots
+    var splomXa = Object.keys(splomAxes.x);
+    var splomYa = Object.keys(splomAxes.y);
+    if(splomXa.length > 1 && splomYa.length > 1) {
+        Registry.getComponentMethod('grid', 'sizeDefaults')(newLayout, newFullLayout);
+
+        for(i = 0; i < splomXa.length; i++) {
+            Lib.pushUnique(subplots.xaxis, splomXa[i]);
+            for(j = 0; j < splomYa.length; j++) {
+                if(i === 0) Lib.pushUnique(subplots.yaxis, splomYa[j]);
+                Lib.pushUnique(subplots.cartesian, splomXa[i] + splomYa[j]);
+            }
+        }
+    }
 
     // attach helper method to check whether a plot type is present on graph
     newFullLayout._has = plots._hasPlotType.bind(newFullLayout);
@@ -865,7 +881,8 @@ plots.supplyDataDefaults = function(dataIn, dataOut, layout, fullLayout) {
     var cnt = 0;
     var colorCnt = 0;
 
-    var i, fullTrace, trace;
+    var fullTrace, trace;
+    var i, j;
 
     fullLayout._transformModules = [];
 
@@ -904,7 +921,7 @@ plots.supplyDataDefaults = function(dataIn, dataOut, layout, fullLayout) {
         if(fullTrace.transforms && fullTrace.transforms.length) {
             var expandedTraces = applyTransforms(fullTrace, dataOut, layout, fullLayout);
 
-            for(var j = 0; j < expandedTraces.length; j++) {
+            for(j = 0; j < expandedTraces.length; j++) {
                 var expandedTrace = expandedTraces[j];
                 var fullExpandedTrace = plots.supplyTraceDefaults(expandedTrace, cnt, fullLayout, i);
 

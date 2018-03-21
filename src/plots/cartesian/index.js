@@ -226,7 +226,6 @@ exports.clean = function(newFullData, newFullLayout, oldFullData, oldFullLayout)
 
     var hadScatter, hasScatter, hadGl, hasGl, i, oldPlots, ids, subplotInfo, moduleName;
 
-
     for(i = 0; i < oldModules.length; i++) {
         moduleName = oldModules[i].name;
         if(moduleName === 'scatter') hadScatter = true;
@@ -272,8 +271,13 @@ exports.clean = function(newFullData, newFullLayout, oldFullData, oldFullLayout)
         }
     }
 
+    exports.cleanSubplots(newFullData, newFullLayout, oldFullData, oldFullLayout);
+};
+
+exports.cleanSubplots = function(newFullData, newFullLayout, oldFullData, oldFullLayout) {
     var oldSubplotList = oldFullLayout._subplots || {};
     var newSubplotList = newFullLayout._subplots || {xaxis: [], yaxis: []};
+    var i;
 
     // delete any titles we don't need anymore
     // check if axis list has changed, and if so clear old titles

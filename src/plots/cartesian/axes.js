@@ -1552,7 +1552,7 @@ axes.doTicks = function(gd, axid, skipTitle) {
 
     var axLetter = axid.charAt(0);
     var counterLetter = axes.counterLetter(axid);
-    var vals = axes.calcTicks(ax);
+    var vals = ax._vals = axes.calcTicks(ax);
     var datafn = function(d) { return [d.text, d.x, ax.mirror, d.font, d.fontSize, d.fontColor].join('_'); };
     var tcls = axid + 'tick';
     var gcls = axid + 'grid';
@@ -2095,6 +2095,9 @@ axes.doTicks = function(gd, axid, skipTitle) {
         var gridcontainer = plotinfo.gridlayer.selectAll('.' + axid);
         var zlcontainer = plotinfo.zerolinelayer;
         var gridvals = plotinfo['hidegrid' + axLetter] ? [] : valsClipped;
+
+//         return;
+
         var gridpath = ax._gridpath || ((axLetter === 'x' ?
                 ('M0,' + counteraxis._offset + 'v') :
                 ('M' + counteraxis._offset + ',0h')

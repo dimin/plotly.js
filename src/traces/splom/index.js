@@ -10,6 +10,7 @@
 
 var createRegl = require('regl');
 var createMatrix = require('regl-scattermatrix');
+var createLine = require('regl-line2d');
 
 var Lib = require('../../lib');
 var AxisIDs = require('../../plots/cartesian/axis_ids');
@@ -99,12 +100,14 @@ function sceneUpdate(gd, stash) {
         unselectBatch: null,
         // regl- component stubs, initialized in dirty plot call
         matrix: false,
+        grid: false,
         select: null
     };
 
     if(!scene) {
         scene = stash._scene = Lib.extendFlat({}, reset, first);
 
+        // TODO get drag to work !!!
         scene.update = function update(opt) {
             if(scene.matrix) scene.matrix.update(opt);
             scene.draw();
@@ -177,7 +180,6 @@ function plot(gd, _, cdata) {
     });
 
     var regl = fullLayout._glcanvas.data()[0].regl;
-
     var dimLength = trace.dimensions.length;
     var viewOpts = {
         ranges: new Array(dimLength),
@@ -201,7 +203,77 @@ function plot(gd, _, cdata) {
         scene.matrix.update(scene.matrixOptions);
     }
 
+    if(!scene.grid) {
+        scene.grid = createLine(regl);
+    }
+
+    scene.grid.update(makeGridData(gd, trace));
+    scene.grid.draw();
+
+    // TODO bring grid.draw() into scene.update()
     scene.update(viewOpts);
+}
+
+function makeGridData(gd, trace) {
+    var fullLayout = gd._fullLayout;
+    var gs = fullLayout._size;
+    var fullView = [0, 0, fullLayout.width, fullLayout.height];
+    var dimLength = trace.dimensions.length;
+    var lookup = {};
+    var k;
+
+    function push(ax, x0, x1, y0, y1) {
+        var key = String(ax.gridcolor + ax.gridwidth);
+
+        if(key in lookup) {
+            lookup[key].data.push(x0, x1, y0, y1, NaN, NaN);
+        } else {
+            lookup[key] = {
+                overlay: true,
+                data: [x0, x1, y0, y1, NaN, NaN],
+                join: 'rect',
+                thickness: ax.gridwidth,
+                color: ax.gridcolor,
+                viewport: fullView,
+                range: fullView
+            };
+        }
+    }
+
+    for(var i = 0; i < dimLength; i++) {
+        var xa = AxisIDs.getFromId(gd, trace.xaxes[i]);
+        var xVals = xa._vals;
+
+        for(var j = 0; j < dimLength; j++) {
+            var ya = AxisIDs.getFromId(gd, trace.yaxes[j]);
+            var yVals = ya._vals;
+
+            // ya.l2p assumes top-to-bottom coordinate system (a la SVG),
+            // we need to compute bottom-to-top offsets and slopes:
+            var yOffset = gs.b + ya.domain[0] * gs.h;
+            var ym = -ya._m;
+            var yb = -ym * ya.r2l(ya.range[0], trace.calendar);
+
+            for(k = 0; k < xVals.length; k++) {
+                var x = xa._offset + xa.l2p(xVals[k].x);
+                push(xa, x, yOffset, x, yOffset + ya._length);
+            }
+
+            for(k = 0; k < yVals.length; k++) {
+                var y = yOffset + yb + ym * yVals[k].x;
+                push(ya, xa._offset, y, xa._offset + xa._length, y);
+            }
+        }
+    }
+
+    // TODO make batches for zeroline (w/ zerolinecolor and zerolinewidth)
+
+    var gridBatches = [];
+    for(k in lookup) {
+        gridBatches.push(lookup[k]);
+    }
+
+    return gridBatches;
 }
 
 // TODO splom 'needs' the grid component, register it here?

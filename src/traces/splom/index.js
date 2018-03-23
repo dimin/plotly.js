@@ -203,12 +203,13 @@ function plot(gd, _, cdata) {
         scene.matrix.update(scene.matrixOptions);
     }
 
-    if(!scene.grid) {
-        scene.grid = createLine(regl);
+    if(fullLayout._hasOnlyLargeSploms) {
+        if(!scene.grid) {
+            scene.grid = createLine(regl);
+        }
+        scene.grid.update(makeGridData(gd, trace));
+        scene.grid.draw();
     }
-
-    scene.grid.update(makeGridData(gd, trace));
-    scene.grid.draw();
 
     // TODO bring grid.draw() into scene.update()
     scene.update(viewOpts);

@@ -221,10 +221,23 @@ function plotOne(gd, plotinfo, cdSubplot, transitionOpts, makeOnCompleteCallback
 }
 
 exports.clean = function(newFullData, newFullLayout, oldFullData, oldFullLayout) {
-    var oldModules = oldFullLayout._modules || [],
-        newModules = newFullLayout._modules || [];
+    var oldModules = oldFullLayout._modules || [];
+    var newModules = newFullLayout._modules || [];
+    var oldPlots = oldFullLayout._plots || {};
 
-    var hadScatter, hasScatter, hadGl, hasGl, i, oldPlots, ids, subplotInfo, moduleName;
+    var hadScatter, hasScatter;
+    var hadGl, hasGl;
+    var i, k, subplotInfo, moduleName;
+
+    // when going from a large splom graph to something else,
+    // we need to clear <g subplot> so that the new cartesian subplot
+    // can have the correct layer ordering
+    if(oldFullLayout._hasOnlyLargeSploms && !newFullLayout._hasOnlyLargeSploms) {
+        for(k in oldPlots) {
+            subplotInfo = oldPlots[k];
+            if(subplotInfo.plotgroup) subplotInfo.plotgroup.remove();
+        }
+    }
 
     for(i = 0; i < oldModules.length; i++) {
         moduleName = oldModules[i].name;
@@ -239,12 +252,8 @@ exports.clean = function(newFullData, newFullLayout, oldFullData, oldFullLayout)
     }
 
     if(hadScatter && !hasScatter) {
-        oldPlots = oldFullLayout._plots;
-        ids = Object.keys(oldPlots || {});
-
-        for(i = 0; i < ids.length; i++) {
-            subplotInfo = oldPlots[ids[i]];
-
+        for(k in oldPlots) {
+            subplotInfo = oldPlots[k];
             if(subplotInfo.plot) {
                 subplotInfo.plot.select('g.scatterlayer')
                     .selectAll('g.trace')
@@ -259,11 +268,8 @@ exports.clean = function(newFullData, newFullLayout, oldFullData, oldFullLayout)
     }
 
     if(hadGl && !hasGl) {
-        oldPlots = oldFullLayout._plots;
-        ids = Object.keys(oldPlots || {});
-
-        for(i = 0; i < ids.length; i++) {
-            subplotInfo = oldPlots[ids[i]];
+        for(k in oldPlots) {
+            subplotInfo = oldPlots[k];
 
             if(subplotInfo._scene) {
                 subplotInfo._scene.destroy();
@@ -338,7 +344,7 @@ exports.drawFramework = function(gd) {
         // initialize list of overlay subplots
         plotinfo.overlays = [];
 
-        makeSubplotLayer(plotinfo);
+        makeSubplotLayer(gd, plotinfo);
 
         // fill in list of overlay subplots
         if(plotinfo.mainplot) {
@@ -354,7 +360,7 @@ exports.drawFramework = function(gd) {
 };
 
 exports.rangePlot = function(gd, plotinfo, cdSubplot) {
-    makeSubplotLayer(plotinfo);
+    makeSubplotLayer(gd, plotinfo);
     plotOne(gd, plotinfo, cdSubplot);
     Plots.style(gd);
 };
@@ -385,45 +391,53 @@ function makeSubplotData(gd) {
     return subplotData;
 }
 
-function makeSubplotLayer(plotinfo) {
+function makeSubplotLayer(gd, plotinfo) {
     var plotgroup = plotinfo.plotgroup;
     var id = plotinfo.id;
     var xLayer = constants.layerValue2layerClass[plotinfo.xaxis.layer];
     var yLayer = constants.layerValue2layerClass[plotinfo.yaxis.layer];
+    var hasOnlyLargeSploms = gd._fullLayout._hasOnlyLargeSploms;
 
     if(!plotinfo.mainplot) {
-        var backLayer = ensureSingle(plotgroup, 'g', 'layer-subplot');
-        plotinfo.shapelayer = ensureSingle(backLayer, 'g', 'shapelayer');
-        plotinfo.imagelayer = ensureSingle(backLayer, 'g', 'imagelayer');
+        if(hasOnlyLargeSploms) {
+            plotinfo.plot = ensureSingle(plotgroup, 'g', 'plot');
+            plotinfo.xlines = ensureSingle(plotgroup, 'path', 'xlines-above');
+            plotinfo.ylines = ensureSingle(plotgroup, 'path', 'ylines-above');
+            plotinfo.xaxislayer = ensureSingle(plotgroup, 'g', 'xaxislayer-above');
+            plotinfo.yaxislayer = ensureSingle(plotgroup, 'g', 'yaxislayer-above');
+        }
+        else {
+            var backLayer = ensureSingle(plotgroup, 'g', 'layer-subplot');
+            plotinfo.shapelayer = ensureSingle(backLayer, 'g', 'shapelayer');
+            plotinfo.imagelayer = ensureSingle(backLayer, 'g', 'imagelayer');
 
-        plotinfo.gridlayer = ensureSingle(plotgroup, 'g', 'gridlayer');
+            plotinfo.gridlayer = ensureSingle(plotgroup, 'g', 'gridlayer');
+            plotinfo.zerolinelayer = ensureSingle(plotgroup, 'g', 'zerolinelayer');
 
-        plotinfo.zerolinelayer = ensureSingle(plotgroup, 'g', 'zerolinelayer');
+            ensureSingle(plotgroup, 'path', 'xlines-below');
+            ensureSingle(plotgroup, 'path', 'ylines-below');
+            plotinfo.overlinesBelow = ensureSingle(plotgroup, 'g', 'overlines-below');
 
-        ensureSingle(plotgroup, 'path', 'xlines-below');
-        ensureSingle(plotgroup, 'path', 'ylines-below');
-        plotinfo.overlinesBelow = ensureSingle(plotgroup, 'g', 'overlines-below');
+            ensureSingle(plotgroup, 'g', 'xaxislayer-below');
+            ensureSingle(plotgroup, 'g', 'yaxislayer-below');
+            plotinfo.overaxesBelow = ensureSingle(plotgroup, 'g', 'overaxes-below');
 
-        ensureSingle(plotgroup, 'g', 'xaxislayer-below');
-        ensureSingle(plotgroup, 'g', 'yaxislayer-below');
-        plotinfo.overaxesBelow = ensureSingle(plotgroup, 'g', 'overaxes-below');
+            plotinfo.plot = ensureSingle(plotgroup, 'g', 'plot');
+            plotinfo.overplot = ensureSingle(plotgroup, 'g', 'overplot');
 
-        plotinfo.plot = ensureSingle(plotgroup, 'g', 'plot');
-        plotinfo.overplot = ensureSingle(plotgroup, 'g', 'overplot');
+            plotinfo.xlines = ensureSingle(plotgroup, 'path', 'xlines-above');
+            plotinfo.ylines = ensureSingle(plotgroup, 'path', 'ylines-above');
 
-        ensureSingle(plotgroup, 'path', 'xlines-above');
-        ensureSingle(plotgroup, 'path', 'ylines-above');
-        plotinfo.overlinesAbove = ensureSingle(plotgroup, 'g', 'overlines-above');
+            ensureSingle(plotgroup, 'g', 'xaxislayer-above');
+            ensureSingle(plotgroup, 'g', 'yaxislayer-above');
+            plotinfo.overaxesAbove = ensureSingle(plotgroup, 'g', 'overaxes-above');
 
-        ensureSingle(plotgroup, 'g', 'xaxislayer-above');
-        ensureSingle(plotgroup, 'g', 'yaxislayer-above');
-        plotinfo.overaxesAbove = ensureSingle(plotgroup, 'g', 'overaxes-above');
-
-        // set refs to correct layers as determined by 'axis.layer'
-        plotinfo.xlines = plotgroup.select('.xlines-' + xLayer);
-        plotinfo.ylines = plotgroup.select('.ylines-' + yLayer);
-        plotinfo.xaxislayer = plotgroup.select('.xaxislayer-' + xLayer);
-        plotinfo.yaxislayer = plotgroup.select('.yaxislayer-' + yLayer);
+            // set refs to correct layers as determined by 'axis.layer'
+            plotinfo.xlines = plotgroup.select('.xlines-' + xLayer);
+            plotinfo.ylines = plotgroup.select('.ylines-' + yLayer);
+            plotinfo.xaxislayer = plotgroup.select('.xaxislayer-' + xLayer);
+            plotinfo.yaxislayer = plotgroup.select('.yaxislayer-' + yLayer);
+        }
     }
     else {
         var mainplotinfo = plotinfo.mainplotinfo;
@@ -458,14 +472,16 @@ function makeSubplotLayer(plotinfo) {
         plotinfo.yaxislayer = mainplotgroup.select('.overaxes-' + yLayer).select('.' + yId);
     }
 
-    ensureSingleAndAddDatum(plotinfo.gridlayer, 'g', plotinfo.xaxis._id);
-    ensureSingleAndAddDatum(plotinfo.gridlayer, 'g', plotinfo.yaxis._id);
-    plotinfo.gridlayer.selectAll('g').sort(axisIds.idSort);
-
     // common attributes for all subplots, overlays or not
 
-    for(var i = 0; i < constants.traceLayerClasses.length; i++) {
-        ensureSingle(plotinfo.plot, 'g', constants.traceLayerClasses[i]);
+    if(!hasOnlyLargeSploms) {
+        ensureSingleAndAddDatum(plotinfo.gridlayer, 'g', plotinfo.xaxis._id);
+        ensureSingleAndAddDatum(plotinfo.gridlayer, 'g', plotinfo.yaxis._id);
+        plotinfo.gridlayer.selectAll('g').sort(axisIds.idSort);
+
+        for(var i = 0; i < constants.traceLayerClasses.length; i++) {
+            ensureSingle(plotinfo.plot, 'g', constants.traceLayerClasses[i]);
+        }
     }
 
     plotinfo.xlines

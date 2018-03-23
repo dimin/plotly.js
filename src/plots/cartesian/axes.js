@@ -1517,18 +1517,14 @@ axes.doTicks = function(gd, axid, skipTitle) {
 
         if(axid === 'redraw') {
             fullLayout._paper.selectAll('g.subplot').each(function(subplot) {
-                var plotinfo = fullLayout._plots[subplot],
-                    xa = plotinfo.xaxis,
-                    ya = plotinfo.yaxis;
+                var plotinfo = fullLayout._plots[subplot];
+                var xa = plotinfo.xaxis;
+                var ya = plotinfo.yaxis;
 
-                plotinfo.xaxislayer
-                    .selectAll('.' + xa._id + 'tick').remove();
-                plotinfo.yaxislayer
-                    .selectAll('.' + ya._id + 'tick').remove();
-                plotinfo.gridlayer
-                    .selectAll('path').remove();
-                plotinfo.zerolinelayer
-                    .selectAll('path').remove();
+                plotinfo.xaxislayer.selectAll('.' + xa._id + 'tick').remove();
+                plotinfo.yaxislayer.selectAll('.' + ya._id + 'tick').remove();
+                if(plotinfo.gridlayer) plotinfo.gridlayer.selectAll('path').remove();
+                if(plotinfo.zerolinelayer) plotinfo.zerolinelayer.selectAll('path').remove();
                 fullLayout._infolayer.select('.g-' + xa._id + 'title').remove();
                 fullLayout._infolayer.select('.g-' + ya._id + 'title').remove();
             });
@@ -2092,11 +2088,11 @@ axes.doTicks = function(gd, axid, skipTitle) {
     }
 
     function drawGrid(plotinfo, counteraxis, subplot) {
+        if(fullLayout._hasOnlyLargeSploms) return;
+
         var gridcontainer = plotinfo.gridlayer.selectAll('.' + axid);
         var zlcontainer = plotinfo.zerolinelayer;
         var gridvals = plotinfo['hidegrid' + axLetter] ? [] : valsClipped;
-
-//         return;
 
         var gridpath = ax._gridpath || ((axLetter === 'x' ?
                 ('M0,' + counteraxis._offset + 'v') :

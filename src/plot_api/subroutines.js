@@ -454,6 +454,12 @@ exports.doLegend = function(gd) {
 
 exports.doTicksRelayout = function(gd) {
     Axes.doTicks(gd, 'redraw');
+
+    // TODO does this preserve order?
+    if(gd._fullLayout._hasOnlyLargeSploms) {
+        gd._fullLayout._modules[0].basePlotModule.drawGrid(gd);
+    }
+
     exports.drawMainTitle(gd);
     return Plots.previousPromises(gd);
 };

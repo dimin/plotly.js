@@ -191,8 +191,7 @@ function plot(gd, _, cdata) {
         viewOpts.domains[i] = [xa.domain[0], ya.domain[0], xa.domain[1], ya.domain[1]];
     }
 
-    viewOpts.viewport = [0, 0, fullLayout.width, fullLayout.height];
-    viewOpts.padding = [gs.l, gs.t, gs.r, gs.b];
+    viewOpts.viewport = [gs.l, gs.b, fullLayout.width - gs.r, fullLayout.height - gs.t];
 
     if(scene.matrix === true) {
         scene.matrix = createMatrix(regl);

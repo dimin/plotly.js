@@ -12,6 +12,7 @@ var createRegl = require('regl');
 var createLine = require('regl-line2d');
 
 var Registry = require('../../registry');
+var Lib = require('../../lib');
 var getModuleCalcData = require('../../plots/get_data').getModuleCalcData;
 var Cartesian = require('../../plots/cartesian');
 var AxisIDs = require('../../plots/cartesian/axis_ids');
@@ -65,9 +66,8 @@ function drawGrid(gd) {
     splomGrid.draw();
 }
 
+// this clocks in at ~30ms at 50x50 - we could perf this up!
 function makeGridData(gd) {
-    console.time('makeGridData')
-
     var fullLayout = gd._fullLayout;
     var gs = fullLayout._size;
     var fullView = [0, 0, fullLayout.width, fullLayout.height];
@@ -76,8 +76,10 @@ function makeGridData(gd) {
     var lookup = {};
     var k;
 
-    function push(ax, x0, x1, y0, y1) {
-        var key = String(ax.gridcolor + ax.gridwidth);
+    function push(prefix, ax, x0, x1, y0, y1) {
+        var lcolor = ax[prefix + 'color'];
+        var lwidth = ax[prefix + 'width'];
+        var key = String(lcolor + lwidth);
 
         if(key in lookup) {
             lookup[key].data.push(NaN, NaN, x0, x1, y0, y1);
@@ -85,8 +87,8 @@ function makeGridData(gd) {
             lookup[key] = {
                 data: [x0, x1, y0, y1],
                 join: 'rect',
-                thickness: ax.gridwidth,
-                color: ax.gridcolor,
+                thickness: lwidth,
+                color: lcolor,
                 viewport: fullView,
                 range: fullView
             };
@@ -96,47 +98,65 @@ function makeGridData(gd) {
     for(var i = 0; i < splomXa.length; i++) {
         var xa = AxisIDs.getFromId(gd, splomXa[i]);
         var xVals = xa._vals;
+        var xShowZl = showZeroLine(xa);
 
         for(var j = 0; j < splomYa.length; j++) {
             var ya = AxisIDs.getFromId(gd, splomYa[j]);
             var yVals = ya._vals;
+            var yShowZl = showZeroLine(ya);
 
             // ya.l2p assumes top-to-bottom coordinate system (a la SVG),
             // we need to compute bottom-to-top offsets and slopes:
             var yOffset = gs.b + ya.domain[0] * gs.h;
             var ym = -ya._m;
-            // TODO !!
-//             var yb = -ym * ya.r2l(ya.range[0], trace.calendar);
-            var yb = -ym * ya.r2l(ya.range[0]);
+            var yb = -ym * ya.r2l(ya.range[0], ya.calendar);
+
+            var x, y;
 
             if(xa.showgrid) {
                 for(k = 0; k < xVals.length; k++) {
-                    var x = xa._offset + xa.l2p(xVals[k].x);
-                    push(xa, x, yOffset, x, yOffset + ya._length);
+                    x = xa._offset + xa.l2p(xVals[k].x);
+                    push('grid', xa, x, yOffset, x, yOffset + ya._length);
                 }
             }
-
+            if(xShowZl) {
+                x = xa._offset + xa.l2p(0);
+                push('zeroline', xa, x, yOffset, x, yOffset + ya._length);
+            }
             if(ya.showgrid) {
                 for(k = 0; k < yVals.length; k++) {
-                    var y = yOffset + yb + ym * yVals[k].x;
-                    push(ya, xa._offset, y, xa._offset + xa._length, y);
+                    y = yOffset + yb + ym * yVals[k].x;
+                    push('grid', ya, xa._offset, y, xa._offset + xa._length, y);
                 }
+            }
+            if(yShowZl) {
+                y = yOffset + yb + 0;
+                push('zeroline', ya, xa._offset, y, xa._offset + xa._length, y);
             }
         }
     }
-
-    // TODO make batches for zeroline (w/ zerolinecolor and zerolinewidth)
-    // TODO optimize showgrid: false case!
 
     var gridBatches = [];
     for(k in lookup) {
         gridBatches.push(lookup[k]);
     }
 
-    console.log(lookup)
-
-    console.timeEnd('makeGridData')
     return gridBatches;
+}
+
+// just like in Axes.doTicks but without the loop over traces
+// TODO dry this up
+function showZeroLine(ax) {
+    var rng = Lib.simpleMap(ax.range, ax.r2l);
+    var p0 = ax.l2p(0);
+
+    return (
+        ax.zeroline &&
+        ax._vals && ax._vals.length &&
+        (rng[0] * rng[1] <= 0) &&
+        (ax.type === 'linear' || ax.type === '-') &&
+        ((p0 > 1 && p0 < ax._length - 1) || !ax.showline)
+    );
 }
 
 function clean(newFullData, newFullLayout, oldFullData, oldFullLayout) {

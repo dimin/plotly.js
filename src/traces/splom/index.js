@@ -57,7 +57,7 @@ function calc(gd, trace) {
         calcAxisExpansion(gd, trace, xa, ya, matrix[i], matrix[i], ppad);
     }
 
-    var scene = stash.scene = sceneUpdate(gd, stash);
+    var scene = trace._scene = stash.scene = sceneUpdate(gd, stash);
     if(!scene.matrix) scene.matrix = true;
     scene.matrixOptions = opts;
 
@@ -85,6 +85,7 @@ function makeCalcdata(ax, trace, dim) {
     return cdata;
 }
 
+// TODO do we need this?
 function sceneUpdate(gd, stash) {
     var scene = stash._scene;
 
@@ -96,9 +97,7 @@ function sceneUpdate(gd, stash) {
     var first = {
         selectBatch: null,
         unselectBatch: null,
-        // regl- component stubs, initialized in dirty plot call
         matrix: false,
-        grid: false,
         select: null
     };
 
@@ -162,22 +161,8 @@ function plot(gd, _, cdata) {
     var gs = fullLayout._size;
     var scene = cdata[0][0].t.scene;
     var trace = cdata[0][0].trace;
-
-    // make sure proper regl instances are created
-    fullLayout._glcanvas.each(function(d) {
-        if(d.regl || d.pick) return;
-        d.regl = createRegl({
-            canvas: this,
-            attributes: {
-                antialias: !d.pick,
-                preserveDrawingBuffer: true
-            },
-            extensions: ['ANGLE_instanced_arrays', 'OES_element_index_uint'],
-            pixelRatio: gd._context.plotGlPixelRatio || global.devicePixelRatio
-        });
-    });
-
     var regl = fullLayout._glcanvas.data()[0].regl;
+
     var dimLength = trace.dimensions.length;
     var viewOpts = {
         ranges: new Array(dimLength),
@@ -191,18 +176,15 @@ function plot(gd, _, cdata) {
         viewOpts.domains[i] = [xa.domain[0], ya.domain[0], xa.domain[1], ya.domain[1]];
     }
 
-    viewOpts.viewport = [0, 0, fullLayout.width, fullLayout.height];
-    viewOpts.padding = [gs.l, gs.t, gs.r, gs.b];
+    // TODO fix this!
+    viewOpts.viewport = [gs.l, gs.b, gs.w, gs.h];
 
     if(scene.matrix === true) {
         scene.matrix = createMatrix(regl);
     }
-    if(scene.matrix) {
-        scene.matrix.update(scene.matrixOptions);
-    }
 
-    // TODO bring grid.draw() into scene.update()
-    scene.update(viewOpts);
+    scene.matrix.update(scene.matrixOptions);
+    scene.matrix.draw();
 }
 
 

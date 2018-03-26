@@ -8,6 +8,7 @@
 
 'use strict';
 
+var createRegl = require('regl');
 var createLine = require('regl-line2d');
 
 var Registry = require('../../registry');
@@ -29,20 +30,33 @@ function plot(gd) {
         });
     }
 
-    for(var i = 0; i < splomCalcData.length; i++) {
-        _module.plot(gd, {}, splomCalcData);
-    }
+    // make sure proper regl instances are created
+    fullLayout._glcanvas.each(function(d) {
+        if(d.regl || d.pick) return;
+        d.regl = createRegl({
+            canvas: this,
+            attributes: {
+                antialias: !d.pick,
+                preserveDrawingBuffer: true
+            },
+            extensions: ['ANGLE_instanced_arrays', 'OES_element_index_uint'],
+            pixelRatio: gd._context.plotGlPixelRatio || global.devicePixelRatio
+        });
+    });
 
     if(fullLayout._hasOnlyLargeSploms) {
         drawGrid(gd);
+    }
+
+    for(var i = 0; i < splomCalcData.length; i++) {
+        _module.plot(gd, {}, splomCalcData);
     }
 }
 
 function drawGrid(gd) {
     var fullLayout = gd._fullLayout;
     var regl = fullLayout._glcanvas.data()[0].regl;
-    var gl = regl._gl;
-    var splomGrid = fullLayout._splomGrid
+    var splomGrid = fullLayout._splomGrid;
 
     if(!splomGrid) {
         splomGrid = fullLayout._splomGrid = createLine(regl);

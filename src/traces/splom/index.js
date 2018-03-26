@@ -8,7 +8,6 @@
 
 'use strict';
 
-var createRegl = require('regl');
 var createMatrix = require('regl-scattermatrix');
 
 var Lib = require('../../lib');

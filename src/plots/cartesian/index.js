@@ -280,6 +280,7 @@ exports.clean = function(newFullData, newFullLayout, oldFullData, oldFullLayout)
     exports.cleanSubplots(newFullData, newFullLayout, oldFullData, oldFullLayout);
 };
 
+// TODO just call Cartesian.clean from Splom.clean !!!
 exports.cleanSubplots = function(newFullData, newFullLayout, oldFullData, oldFullLayout) {
     var oldSubplotList = oldFullLayout._subplots || {};
     var newSubplotList = newFullLayout._subplots || {xaxis: [], yaxis: []};
@@ -400,6 +401,11 @@ function makeSubplotLayer(gd, plotinfo) {
 
     if(!plotinfo.mainplot) {
         if(hasOnlyLargeSploms) {
+            // TODO could do even better
+            // - we don't need plot (but we would have to mock it in lsInner
+            //   and other places
+            // - we don't (x|y)lines and (x|y)axislayer for most subplots
+            //   usually just the bottom x and left y axes.
             plotinfo.plot = ensureSingle(plotgroup, 'g', 'plot');
             plotinfo.xlines = ensureSingle(plotgroup, 'path', 'xlines-above');
             plotinfo.ylines = ensureSingle(plotgroup, 'path', 'ylines-above');

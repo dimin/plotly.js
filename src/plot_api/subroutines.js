@@ -154,6 +154,10 @@ exports.lsInner = function(gd) {
         fullLayout._plots[subplot].bg = d3.select(this);
     });
 
+    // TODO do we need to go through this loop every time?
+    // I think this only styles axis lines and fills in ax._linepositions
+    // DOUBLE CHECK !!!
+
     subplotSelection.each(function(subplot) {
         var plotinfo = fullLayout._plots[subplot];
         var xa = plotinfo.xaxis;

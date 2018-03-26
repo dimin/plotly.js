@@ -418,6 +418,8 @@ plots.supplyDefaults = function(gd) {
         newFullLayout._hasOnlyLargeSploms = 1;
     }
 
+//     newFullLayout._hasOnlyLargeSploms = 1;
+
     // TODO remove in v2.0.0
     // add has-plot-type refs to fullLayout for backward compatibility
     newFullLayout._hasCartesian = newFullLayout._has('cartesian');

@@ -50,6 +50,34 @@ function plot(gd) {
     }
 
     _module.plot(gd, {}, splomCalcData);
+}
+
+function drag(gd) {
+    var cd = gd.calcdata;
+    var fullLayout = gd._fullLayout;
+
+    for(var i = 0; i < cd.length; i++) {
+        var cd0 = cd[i][0];
+        var trace = cd0.trace;
+        var scene = cd0.t._scene;
+
+        if(trace.type === 'splom' && scene && scene.matrix) {
+            var dimLength = trace.dimensions.length;
+            var ranges = new Array(dimLength);
+
+            for(var j = 0; j < dimLength; j++) {
+                var xrng = AxisIDs.getFromId(gd, trace.xaxes[j]).range;
+                var yrng = AxisIDs.getFromId(gd, trace.yaxes[j]).range;
+                ranges[j] = [xrng[0], yrng[0], xrng[1], yrng[1]];
+            }
+
+            scene.matrix.update({ranges: ranges});
+            scene.matrix.draw();
+        }
+    }
+
+    if(fullLayout._hasOnlyLargeSploms) {
+        fullLayout._modules[0].basePlotModule.drawGrid(gd);
     }
 }
 
@@ -172,6 +200,7 @@ module.exports = {
     supplyLayoutDefaults: Cartesian.supplyLayoutDefaults,
     drawFramework: Cartesian.drawFramework,
     plot: plot,
+    drag: drag,
     drawGrid: drawGrid,
     clean: clean,
     toSVG: Cartesian.toSVG

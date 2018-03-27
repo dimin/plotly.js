@@ -57,7 +57,8 @@ function calc(gd, trace) {
         calcAxisExpansion(gd, trace, xa, ya, matrix[i], matrix[i], ppad);
     }
 
-    var scene = trace._scene = stash.scene = sceneUpdate(gd, stash);
+
+    var scene = stash.scene = sceneUpdate(gd, stash);
     if(!scene.matrix) scene.matrix = true;
     scene.matrixOptions = opts;
 

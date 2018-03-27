@@ -794,28 +794,8 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
                 .call(Drawing.hideOutsideRangePoints, subplot, '.bartext');
         }
 
-        var fullData = gd._fullData;
-
-        for(i = 0; i < fullData.length; i++) {
-            var trace = fullData[i];
-
-            if(trace.type === 'splom' && trace._scene && trace._scene.matrix) {
-                var dimLength = trace.dimensions.length;
-                var viewOpts = {ranges: new Array(dimLength)};
-
-                for(var j = 0; j < dimLength; j++) {
-                    var xrng = getFromId(gd, trace.xaxes[j]).range;
-                    var yrng = getFromId(gd, trace.yaxes[j]).range;
-                    viewOpts.ranges[j] = [xrng[0], yrng[0], xrng[1], yrng[1]];
-                }
-
-                trace._scene.matrix.update(viewOpts);
-                trace._scene.matrix.draw();
-            }
-        }
-
-        if(fullLayout._hasOnlyLargeSploms) {
-            _fullLayout._modules[0].basePlotModule.drawGrid(gd);
+        if(Registry.subplotsRegistry.splom) {
+            Registry.subplotsRegistry.splom.drag(gd);
         }
     }
 

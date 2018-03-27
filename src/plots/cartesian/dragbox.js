@@ -812,8 +812,10 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
                 trace._scene.matrix.update(viewOpts);
                 trace._scene.matrix.draw();
             }
+        }
 
-            trace._module.basePlotModule.drawGrid(gd);
+        if(fullLayout._hasOnlyLargeSploms) {
+            _fullLayout._modules[0].basePlotModule.drawGrid(gd);
         }
     }
 

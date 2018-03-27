@@ -183,6 +183,7 @@ function plot(gd, _, cdata) {
     }
 
     scene.matrix.update(scene.matrixOptions);
+    scene.matrix.update(viewOpts);
     scene.matrix.draw();
 }
 

@@ -8,7 +8,6 @@
 
 'use strict';
 
-var createRegl = require('regl');
 var createMatrix = require('regl-scattermatrix');
 
 var Lib = require('../../lib');
@@ -58,7 +57,7 @@ function calc(gd, trace) {
         calcAxisExpansion(gd, trace, xa, ya, matrix[i], matrix[i], ppad);
     }
 
-    var scene = stash.scene = sceneUpdate(gd, stash);
+    var scene = trace._scene = stash.scene = sceneUpdate(gd, stash);
     if(!scene.matrix) scene.matrix = true;
     scene.matrixOptions = opts;
 
@@ -86,6 +85,7 @@ function makeCalcdata(ax, trace, dim) {
     return cdata;
 }
 
+// TODO do we need this?
 function sceneUpdate(gd, stash) {
     var scene = stash._scene;
 
@@ -97,7 +97,6 @@ function sceneUpdate(gd, stash) {
     var first = {
         selectBatch: null,
         unselectBatch: null,
-        // regl- component stubs, initialized in dirty plot call
         matrix: false,
         select: null
     };
@@ -105,6 +104,7 @@ function sceneUpdate(gd, stash) {
     if(!scene) {
         scene = stash._scene = Lib.extendFlat({}, reset, first);
 
+        // TODO get drag to work !!!
         scene.update = function update(opt) {
             if(scene.matrix) scene.matrix.update(opt);
             scene.draw();
@@ -161,21 +161,6 @@ function plot(gd, _, cdata) {
     var gs = fullLayout._size;
     var scene = cdata[0][0].t.scene;
     var trace = cdata[0][0].trace;
-
-    // make sure proper regl instances are created
-    fullLayout._glcanvas.each(function(d) {
-        if(d.regl || d.pick) return;
-        d.regl = createRegl({
-            canvas: this,
-            attributes: {
-                antialias: !d.pick,
-                preserveDrawingBuffer: true
-            },
-            extensions: ['ANGLE_instanced_arrays', 'OES_element_index_uint'],
-            pixelRatio: gd._context.plotGlPixelRatio || global.devicePixelRatio
-        });
-    });
-
     var regl = fullLayout._glcanvas.data()[0].regl;
 
     var dimLength = trace.dimensions.length;
@@ -196,11 +181,9 @@ function plot(gd, _, cdata) {
     if(scene.matrix === true) {
         scene.matrix = createMatrix(regl);
     }
-    if(scene.matrix) {
-        scene.matrix.update(scene.matrixOptions);
-    }
 
-    scene.update(viewOpts);
+    scene.matrix.update(scene.matrixOptions);
+    scene.matrix.draw();
 }
 
 // TODO splom 'needs' the grid component, register it here?

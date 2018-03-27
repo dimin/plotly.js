@@ -151,6 +151,10 @@ exports.lsInner = function(gd) {
         fullLayout._plots[subplot].bg = d3.select(this);
     });
 
+    // TODO do we need to go through this loop every time?
+    // I think this only styles axis lines and fills in ax._linepositions
+    // DOUBLE CHECK !!!
+
     subplotSelection.each(function(subplot) {
         var plotinfo = fullLayout._plots[subplot];
         var xa = plotinfo.xaxis;
@@ -451,6 +455,12 @@ exports.doLegend = function(gd) {
 
 exports.doTicksRelayout = function(gd) {
     Axes.doTicks(gd, 'redraw');
+
+    // TODO does this preserve order?
+    if(gd._fullLayout._hasOnlyLargeSploms) {
+        gd._fullLayout._modules[0].basePlotModule.drawGrid(gd);
+    }
+
     exports.drawMainTitle(gd);
     return Plots.previousPromises(gd);
 };

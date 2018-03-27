@@ -715,13 +715,10 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
 
         // clear gl frame, if any, since we preserve drawing buffer
         // FIXME: code duplication with cartesian.plot
+        // TODO DRY this up!!
         if(fullLayout._glcanvas && fullLayout._glcanvas.size()) {
             fullLayout._glcanvas.each(function(d) {
-                if(d.regl) {
-                    d.regl.clear({
-                        color: true
-                    });
-                }
+                if(d.regl) d.regl.clear({color: true});
             });
         }
 
@@ -735,8 +732,8 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
             // scattergl translate
             if(subplot._scene && subplot._scene.update) {
                 // FIXME: possibly we could update axis internal _r and _rl here
-                var xaRange = Lib.simpleMap(xa2.range, xa2.r2l),
-                    yaRange = Lib.simpleMap(ya2.range, ya2.r2l);
+                var xaRange = Lib.simpleMap(xa2.range, xa2.r2l);
+                var yaRange = Lib.simpleMap(ya2.range, ya2.r2l);
                 subplot._scene.update(
                     {range: [xaRange[0], yaRange[0], xaRange[1], yaRange[1]]}
                 );
@@ -795,6 +792,28 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
 
             subplot.plot.selectAll('.barlayer .trace')
                 .call(Drawing.hideOutsideRangePoints, subplot, '.bartext');
+        }
+
+        var fullData = gd._fullData;
+
+        for(i = 0; i < fullData.length; i++) {
+            var trace = fullData[i];
+
+            if(trace.type === 'splom' && trace._scene && trace._scene.matrix) {
+                var dimLength = trace.dimensions.length;
+                var viewOpts = {ranges: new Array(dimLength)};
+
+                for(var j = 0; j < dimLength; j++) {
+                    var xrng = getFromId(gd, trace.xaxes[j]).range;
+                    var yrng = getFromId(gd, trace.yaxes[j]).range;
+                    viewOpts.ranges[j] = [xrng[0], yrng[0], xrng[1], yrng[1]];
+                }
+
+                trace._scene.matrix.update(viewOpts);
+                trace._scene.matrix.draw();
+            }
+
+            trace._module.basePlotModule.drawGrid(gd);
         }
     }
 

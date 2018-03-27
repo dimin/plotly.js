@@ -104,7 +104,7 @@ function sceneUpdate(gd, stash) {
     if(!scene) {
         scene = stash._scene = Lib.extendFlat({}, reset, first);
 
-        // TODO get drag to work !!!
+        // TODO should we use something like this on drag?
         scene.update = function update(opt) {
             if(scene.matrix) scene.matrix.update(opt);
             scene.draw();
@@ -115,6 +115,7 @@ function sceneUpdate(gd, stash) {
 
             // TODO selection stuff
 
+            // do we need to use this flag anywhere??
             scene.dirty = false;
         };
 
@@ -151,16 +152,21 @@ function sceneUpdate(gd, stash) {
     }
 
     return scene;
-
 }
 
 function plot(gd, _, cdata) {
     if(!cdata.length) return;
 
+    for(var i = 0; i < cdata.length; i++) {
+        plotOne(gd, cdata[i][0]);
+    }
+}
+
+function plotOne(gd, cd0) {
     var fullLayout = gd._fullLayout;
     var gs = fullLayout._size;
-    var scene = cdata[0][0].t.scene;
-    var trace = cdata[0][0].trace;
+    var scene = cd0.t.scene;
+    var trace = cd0.trace;
     var regl = fullLayout._glcanvas.data()[0].regl;
 
     var dimLength = trace.dimensions.length;

@@ -49,8 +49,7 @@ function plot(gd) {
         drawGrid(gd);
     }
 
-    for(var i = 0; i < splomCalcData.length; i++) {
-        _module.plot(gd, {}, splomCalcData);
+    _module.plot(gd, {}, splomCalcData);
     }
 }
 
